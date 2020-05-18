@@ -1,0 +1,24 @@
+{
+  "name": "12_mysql_employeetracker",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/choumrdh/12_MySQL_EmployeeTracker.git"
+  },
+  "author": "Michelle",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/choumrdh/12_MySQL_EmployeeTracker/issues"
+  },
+  "homepage": "https://github.com/choumrdh/12_MySQL_EmployeeTracker#readme",
+  "dependencies": {
+    "console.table": "^0.10.0",
+    "inquirer": "^7.1.0",
+    "mysql2": "^2.1.0"
+  }
+}
