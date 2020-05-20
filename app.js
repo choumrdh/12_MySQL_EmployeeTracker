@@ -1,5 +1,5 @@
 const mysql = require("mysql2/promise");
-const Table = require("console.table");
+const cTable = require("console.table");
 const inquirer = require("inquirer");
 
 const main = async () => {
@@ -57,7 +57,8 @@ async function startPromptAnswer(connection) {
             await startPromptAnswer(connection);
             break;
         case "Add Employee":
-
+            const returnEmployee = await addEmployeePrompt(connection);
+            await addEmployee(connection, returnEmployee);
             await startPromptAnswer(connection);
             break;
         case "Update Employee":
@@ -65,7 +66,7 @@ async function startPromptAnswer(connection) {
             await startPromptAnswer(connection);
             break;
         case "Update Employee Managers":
-
+        
             await startPromptAnswer(connection);
             break;
         case "View Employees by Manager":
@@ -101,7 +102,6 @@ const viewRole = async (connection) => {
     console.table(rows)
     return rows;
 };
-
 const viewEmployee = async (connection) => {
     const [rows, fields] = await connection.query("SELECT * FROM employee");
     console.table(rows)
@@ -145,15 +145,67 @@ async function addRolePrompt(connection) {
     ])
 };
 const addRole = async (connection, returnRole) => {
-    try{
+    try {
         const sqlQuery = "INSERT INTO role (title, salary, department_id) VALUES (?,?,?)"
         const params = [returnRole.roleTitle, parseFloat(returnRole.salaryWage).toFixed(2), parseInt(returnRole.departmentId)];
         const [rows, fields] = await connection.query(sqlQuery, params);
         console.table(`Added Role`, rows)
-    } catch (err){
-        console.log(`err at addRole function`,err)
+    } catch (err) {
+        console.log(`err at addRole function`, err)
     }
-    
 };
+async function addEmployeePrompt(connection) {
+    const viewRoleList = await viewRole(connection);
+    let roleList = viewRoleList.map((role)=>{
+        console.log("RoleID: "+role.id, "RoleTitle: "+role.title)
+        return `${role.id}, ${role.title}`;
+    });
+     const viewManagerList = await viewManagerName(connection);
+     let managerList = viewManagerList.map((manager)=>{
+        
+         return `${manager.id},${manager.first_name} `
+     })
+    return inquirer.prompt([
+        {
+            type: "input",
+            name: "firstName",
+            message: "Whay is employee's first name?"
+        },{
+            type:"input",
+            name:"lastName",
+            message:"What is employee's last name?"
+        },{
+            type:"list",
+            name: "employeeRoleId",
+            message:"What is employee's role?",
+            choices: roleList
+        }
+        ,{
+            type:"list",
+            name:"managerId",
+            message:"Who is employee's manager?",
+            choices: managerList
+        }
+    ]);
+}
+const addEmployee = async(connection, returnEmployee)=>{
+    try{
+        const sqlQuery ="INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)";
+        const params = [returnEmployee.firstName, returnEmployee.lastName, returnEmployee.employeeRoleId, returnEmployee.managerId]
+        const [rows, fields] = await connection.query(sqlQuery, params);
+        console.table(`Added Employee ${returnEmployee.firstName} ${returnEmployee.lastName}`, rows);
+    }catch (err){
+        console.log(`err at addEmployee function`, err)
+    }
+}
+async function viewManagerName(connection){
+    const [rows, fields] = await connection.query("SELECT * FROM employee WHERE manager_id IS NULL");
+    console.table(rows);
+    return rows;
+};
+
+
+
+
 
 main();
