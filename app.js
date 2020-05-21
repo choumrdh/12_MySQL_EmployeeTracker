@@ -66,7 +66,7 @@ async function startPromptAnswer(connection) {
             await startPromptAnswer(connection);
             break;
         case "Update Employee Managers":
-        
+
             await startPromptAnswer(connection);
             break;
         case "View Employees by Manager":
@@ -157,15 +157,15 @@ const addRole = async (connection, returnRole) => {
 };
 async function addEmployeePrompt(connection) {
     const viewRoleList = await viewRole(connection);
-    let roleList = viewRoleList.map((role)=>{
-        console.log("RoleID: "+role.id, "RoleTitle: "+role.title)
+    let roleList = viewRoleList.map((role) => {
+        console.log("RoleID: " + role.id, "RoleTitle: " + role.title)
         return `${role.id},${role.title}`;
     });
-     const viewManagerList = await viewManagerName(connection);
-     let managerList = viewManagerList.map((manager)=>{
-        
-         return `${manager.id},${manager.first_name}`
-     })
+    const viewManagerList = await viewManagerName(connection);
+    let managerList = viewManagerList.map((manager) => {
+
+        return `${manager.id},${manager.first_name}`
+    })
     return inquirer.prompt([
         {
             type: "input",
@@ -173,10 +173,10 @@ async function addEmployeePrompt(connection) {
             message: "Whay is employee's first name?",
             validate: (name) => {
                 var checkUpperCase = /^[A-Z]/;
-                if (checkUpperCase.test(name)){
+                if (checkUpperCase.test(name)) {
                     console.log(`. ${name}`)
                     return true
-                } else if(name === ""){
+                } else if (name === "") {
                     console.log("Please Enter first name");
                     return false
                 } else {
@@ -184,16 +184,16 @@ async function addEmployeePrompt(connection) {
                     return false
                 }
             }
-        },{
-            type:"input",
-            name:"lastName",
-            message:"What is employee's last name?",
+        }, {
+            type: "input",
+            name: "lastName",
+            message: "What is employee's last name?",
             validate: (name) => {
                 var checkUpperCase = /^[A-Z]/;
-                if (checkUpperCase.test(name)){
+                if (checkUpperCase.test(name)) {
                     console.log(`. ${name}`)
                     return true
-                } else if(name === ""){
+                } else if (name === "") {
                     console.log("Please Enter last name");
                     return false
                 } else {
@@ -201,57 +201,56 @@ async function addEmployeePrompt(connection) {
                     return false
                 }
             }
-        },{
-            type:"list",
+        }, {
+            type: "list",
             name: "employeeRoleId",
-            message:"What is employee's role?",
+            message: "What is employee's role?",
             choices: roleList
         }
-        ,{
-            type:"list",
-            name:"managerId",
-            message:"Who is employee's manager?",
+        , {
+            type: "list",
+            name: "managerId",
+            message: "Who is employee's manager?",
             choices: managerList
         }
     ]);
 }
-const addEmployee = async(connection, returnEmployee)=>{
-    try{
-        const sqlQuery ="INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)";
+const addEmployee = async (connection, returnEmployee) => {
+    try {
+        const sqlQuery = "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)";
         console.log(returnEmployee);
         const params = [returnEmployee.firstName, returnEmployee.lastName, returnEmployee.employeeRoleId.split(",")[0], returnEmployee.managerId.split(",")[0]]
         const [rows, fields] = await connection.query(sqlQuery, params);
         console.table(`Added Employee ${returnEmployee.firstName} ${returnEmployee.lastName}`, rows);
-    }catch (err){
+    } catch (err) {
         console.log(`err at addEmployee function`, err)
     }
 }
-async function viewManagerName(connection){
+async function viewManagerName(connection) {
     const [rows, fields] = await connection.query("SELECT * FROM employee WHERE manager_id IS NULL");
     console.table(rows);
     return rows;
 };
-
 const updateEmployee = async (connection) => {
     // const sqlQuery = 
 }
-async function deleteDepartmentPrompt(connection){
+async function deleteDepartmentPrompt(connection) {
     const viewDepartmentList = await viewDepartment(connection);
     let departmentListId = viewDepartmentList.map((department) => {
-        return `${department.id}, ${department.name}`;
+        return `${department.id},${department.name}`;
     })
     return inquirer.prompt([
-            {
-                type:"list",
-                name:"deleteDepartmentName",
-                message:"Which department whould you like to delete?",
-                choices: departmentListId
-            }
-        ])
+        {
+            type: "list",
+            name: "deleteDepartmentName",
+            message: "Which department whould you like to delete?",
+            choices: departmentListId
+        }
+    ])
 };
-const deleteDepartment = async (connection, getDeleteDepartment)=>{
-    const sqlQuery = "DELETE FROM department WHERE (name) = ?";
-    const params = [getDeleteDepartment.deleteDepartmentName ];
+const deleteDepartment = async (connection, getDeleteDepartment) => {
+    const sqlQuery = "DELETE FROM department WHERE ?";
+    const params = [getDeleteDepartment.deleteDepartmentName.split(",")[1]];
 
     const [rows] = await connection.query(sqlQuery, params);
 
