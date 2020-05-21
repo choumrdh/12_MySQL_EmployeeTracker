@@ -74,7 +74,8 @@ async function startPromptAnswer(connection) {
             await startPromptAnswer(connection);
             break;
         case "Delete Department":
-
+            const getDeleteDepartment = await deleteDepartmentPrompt(connection);
+            await deleteDepartment(connection, getDeleteDepartment);
             await startPromptAnswer(connection);
             break;
         case "Delete Role":
@@ -191,7 +192,8 @@ async function addEmployeePrompt(connection) {
 const addEmployee = async(connection, returnEmployee)=>{
     try{
         const sqlQuery ="INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)";
-        const params = [returnEmployee.firstName, returnEmployee.lastName, returnEmployee.employeeRoleId, returnEmployee.managerId]
+        console.log(returnEmployee.firstName, returnEmployee.lastName, returnEmployee.employeeRoleId, returnEmployee.managerId.manager.id)
+        const params = [returnEmployee.firstName, returnEmployee.lastName, returnEmployee.employeeRoleId, returnEmployee.managerId.manager.id]
         const [rows, fields] = await connection.query(sqlQuery, params);
         console.table(`Added Employee ${returnEmployee.firstName} ${returnEmployee.lastName}`, rows);
     }catch (err){
@@ -202,6 +204,32 @@ async function viewManagerName(connection){
     const [rows, fields] = await connection.query("SELECT * FROM employee WHERE manager_id IS NULL");
     console.table(rows);
     return rows;
+};
+
+const updateEmployee = async (connection) => {
+    // const sqlQuery = 
+}
+async function deleteDepartmentPrompt(connection){
+    const viewDepartmentList = await viewDepartment(connection);
+    let departmentListId = viewDepartmentList.map((department) => {
+        return `${department.id}, ${department.name}`;
+    })
+    return inquirer.prompt([
+            {
+                type:"list",
+                name:"deleteDepartmentName",
+                message:"Which department whould you like to delete?",
+                choices: departmentListId
+            }
+        ])
+};
+const deleteDepartment = async (connection, getDeleteDepartment)=>{
+    const sqlQuery = "DELETE FROM department WHERE name = ?";
+    const params = [getDeleteDepartment.deleteDepartmentName ];
+
+    const [rows] = await connection.query(sqlQuery, params);
+
+    console.table(rows);
 };
 
 
