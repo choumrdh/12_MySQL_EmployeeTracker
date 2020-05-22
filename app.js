@@ -24,7 +24,7 @@ function startPrompt() {
             type: "list",
             name: "action",
             message: "What would like to do?",
-            choices: ["View Departments", "View Roles", "View Employee", "Add Department", "Add Role", "Add Employee", "Update Employee", "Update Employee Managers", "View Employees by Manager", "Delete Department", "Delete Role", "Delete Employee", "Exit"]
+            choices: ["View Departments", "View Roles", "View All Employee", "Add Department", "Add Role", "Add Employee", "Update Employee Role", "Update Employee Managers", "View Employees by Manager", "Delete Department", "Delete Role", "Delete Employee", "Exit"]
         }
     ])
 };
@@ -32,17 +32,14 @@ async function startPromptAnswer(connection) {
     const answer = await startPrompt();
     switch (answer.action) {
         case "View Departments":
-            console.log("-----Departments-----");
             await viewDepartment(connection);
             await startPromptAnswer(connection);
             break;
         case "View Roles":
-            console.log("-----Roles-----");
             await viewRole(connection);
             await startPromptAnswer(connection);
             break;
-        case "View Employee":
-            console.log("-----Employee-----");
+        case "View All Employee":
             await viewEmployee(connection);
             await startPromptAnswer(connection);
             break;
@@ -61,8 +58,9 @@ async function startPromptAnswer(connection) {
             await addEmployee(connection, returnEmployee);
             await startPromptAnswer(connection);
             break;
-        case "Update Employee":
-
+        case "Update Employee Role":
+            const returnUpdateEmployeeRole = await updateEmployeeRolePrompt(connection);
+            await updateEmployeeRole(connection, returnUpdateEmployeeRole);
             await startPromptAnswer(connection);
             break;
         case "Update Employee Managers":
@@ -76,14 +74,19 @@ async function startPromptAnswer(connection) {
         case "Delete Department":
             const getDeleteDepartment = await deleteDepartmentPrompt(connection);
             await deleteDepartment(connection, getDeleteDepartment);
+            await viewDepartment(connection);
             await startPromptAnswer(connection);
             break;
         case "Delete Role":
-
+            const getDeleteRole = await deleteRolePrompt(connection);
+            await deleteRole(connection, getDeleteRole);
+            await viewRole(connection);
             await startPromptAnswer(connection);
             break;
         case "Delete Employee":
-
+            const getDeleteEmployee = await deleteEmployeePrompt(connection);
+            await deleteEmployee(connection, getDeleteEmployee);
+            await viewEmployee(connection);
             await startPromptAnswer(connection);
             break;
         case "Exit":
@@ -91,6 +94,10 @@ async function startPromptAnswer(connection) {
             break;
     }
 
+};
+// VIEW
+const viewAllEmployee = async (connection) => {
+    const 
 }
 
 const viewDepartment = async (connection) => {
@@ -108,6 +115,12 @@ const viewEmployee = async (connection) => {
     console.table(rows)
     return rows;
 };
+async function viewManagerName(connection) {
+    const [rows, fields] = await connection.query("SELECT * FROM employee WHERE manager_id IS NULL");
+    console.table(rows);
+    return rows;
+};
+// ADD
 async function addDepartmentPrompt() {
     return inquirer.prompt([
         {
@@ -225,18 +238,45 @@ const addEmployee = async (connection, returnEmployee) => {
     } catch (err) {
         console.log(`err at addEmployee function`, err)
     }
-}
-async function viewManagerName(connection) {
-    const [rows, fields] = await connection.query("SELECT * FROM employee WHERE manager_id IS NULL");
-    console.table(rows);
-    return rows;
 };
-const updateEmployee = async (connection) => {
-    // const sqlQuery = 
+// UPDATE
+async function updateEmployeeRolePrompt(connection) {
+    const viewEmployeeList = await viewEmployee(connection);
+    let employeeList = viewEmployeeList.map((employee) => {
+        console.log(`${employee.id},${employee.first_name},${employee.last_name}`)
+        return `${employee.id},${employee.first_name},${employee.last_name}`
+    });
+    const viewRoleList = await viewRole(connection);
+    let roleList = viewRoleList.map((role) => {
+        console.log("RoleID: " + role.id, "RoleTitle: " + role.title)
+        return `${role.id},${role.title}`;
+    });
+    return inquirer.prompt([
+        {
+            type: "list",
+            name: "updateEmployee",
+            message: "Please choose employee to update role",
+            choices: employeeList
+        }, {
+            type: "list",
+            name: "updateRoleList",
+            message: "Please select employee's role.",
+            choices: roleList
+        }
+    ]);
 }
+const updateEmployeeRole = async (connection, returnUpdateEmployeeRole) => {
+    const sqlQuery = "UPDATE employee SET role_id = ? WHERE id = ?"
+    console.log(returnUpdateEmployeeRole);
+    const params = [parseInt(returnUpdateEmployeeRole.updateRoleList.split(",")[0]), parseInt(returnUpdateEmployeeRole.updateEmployee.split(",")[0])]
+    const [rows] = await connection.query(sqlQuery, params);
+    console.log(`Updated Employee Role`)
+};
+// DELETE
 async function deleteDepartmentPrompt(connection) {
     const viewDepartmentList = await viewDepartment(connection);
     let departmentListId = viewDepartmentList.map((department) => {
+        console.log(`ID: ${department.id}, NAME:${department.name}`)
         return `${department.id},${department.name}`;
     })
     return inquirer.prompt([
@@ -249,15 +289,59 @@ async function deleteDepartmentPrompt(connection) {
     ])
 };
 const deleteDepartment = async (connection, getDeleteDepartment) => {
-    const sqlQuery = "DELETE FROM department WHERE ?";
-    const params = [getDeleteDepartment.deleteDepartmentName.split(",")[1]];
-
+    const sqlQuery = "DELETE FROM department WHERE id = ?";
+    const params = [getDeleteDepartment.deleteDepartmentName.split(",")[0]];
     const [rows] = await connection.query(sqlQuery, params);
 
-    console.table(`Removed Department` + rows);
+    console.table(`Removed Department`);
 };
+async function deleteRolePrompt(connection) {
+    const viewRoleList = await viewRole(connection);
+    let roleList = viewRoleList.map((role) => {
+        console.log("RoleID: " + role.id, "RoleTitle: " + role.title)
+        return `${role.id},${role.title}`;
+    });
+    return inquirer.prompt([
+        {
+            type: "list",
+            name: "deleteRoleName",
+            message: "Which role would you like to delete?",
+            choices: roleList
+        }
+    ]);
+};
+const deleteRole = async (connection, getDeleteRole) => {
+    const sqlQuery = "DELETE FROM role WHERE id = ?";
+    const params = [getDeleteRole.deleteRoleName.split(",")[0]];
+    const [rows] = await connection.query(sqlQuery, params);
+    console.table(`Removed Role`);
+};
+async function deleteEmployeePrompt(connection) {
+    const viewEmployeeList = await viewEmployee(connection);
+    let employeeList = viewEmployeeList.map((employee) => {
+        console.log(`${employee.id},${employee.first_name},${employee.last_name}`)
+        return `${employee.id},${employee.first_name} ${employee.last_name}`
+    });
+    return inquirer.prompt([
+        {
+            type: "list",
+            name: "deleteEmployeeName",
+            message: "Which emplolyee would you like to delete?",
+            choices: employeeList
+        }
+    ]);
+};
+const deleteEmployee = async (connection, getDeleteEmployee) => {
+    try {
+        const sqlQuery = "DELETE FROM employee WHERE id = ?";
+        const params = [getDeleteEmployee.deleteEmployeeName.split(",")[0]];
+        const [rows] = await connection.query(sqlQuery, params);
+        console.table(`Removed Employee`);
+    } catch (error) {
+        console.log(`Error at deleteEmployee`, error)
+    }
 
-
+};
 
 
 
