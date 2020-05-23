@@ -66,11 +66,12 @@ async function startPromptAnswer(connection) {
         case "Update Employee Manager":
             const returnUpdateEmployeeManager = await updateEmployeeManagerPrompt(connection);
             await updateEmployeeManager(connection, returnUpdateEmployeeManager);
-            await viewAllEmploye(connection);
+            await viewAllEmployee(connection);
             await startPromptAnswer(connection);
             break;
         case "View Employees by Manager":
-
+            const returnManager = await viewEmployeeByManagerPrompt(connection);
+            await viewEmployeeByManager(connection, returnManager);
             await startPromptAnswer(connection);
             break;
         case "Delete Department":
@@ -99,7 +100,7 @@ async function startPromptAnswer(connection) {
 };
 // VIEW
 const viewAllEmployee = async (connection) => {
-    const sqlQuery =`SELECT employee.id, employee.first_name, employee.last_name, role.title AS role, role.salary, department.name AS department, CONCAT(manager.first_name, " ", manager.last_name) AS manager
+    const sqlQuery = `SELECT employee.id, employee.first_name, employee.last_name, role.title AS role, role.salary, department.name AS department, CONCAT(manager.first_name, " ", manager.last_name) AS manager
     FROM employee
     LEFT JOIN role ON employee.role_id = role.id
     LEFT JOIN department ON role.department_id = department.id
@@ -128,6 +129,26 @@ async function viewManagerName(connection) {
     console.table(rows);
     return rows;
 };
+async function viewEmployeeByManagerPrompt(connection) {
+    const viewManagerList = await viewManagerName(connection);
+    let managerList = viewManagerList.map((manager) => {
+        return `${manager.id},${manager.first_name}, ${manager.role_id}`
+    })
+    return inquirer.prompt([
+        {
+            type: "list",
+            name: "managerName",
+            message: "Choose manager to view employee",
+            choices: managerList
+        }
+    ]);
+};
+const viewEmployeeByManager = async (connection, returnManager) => {
+    const sqlQuery = "SELECT * FROM employee WHERE manager_id = ? "
+    const params = [parseInt(returnManager.managerName)];
+    const [rows, fields] = await connection.query(sqlQuery, params)
+    console.log(rows);
+}
 // ADD
 
 async function addDepartmentPrompt() {
@@ -301,9 +322,9 @@ const updateEmployeeManagerPrompt = async (connection) => {
     ]);
 }
 const updateEmployeeManager = async (connection, returnUpdateEmployeeManager) => {
-    const sqlQuery = "UPDATE employee SET id ? WHERE manager_id = ?"
+    const sqlQuery = "UPDATE employee SET manager_id = ? WHERE id = ?"
     console.log(returnUpdateEmployeeManager);
-    const params = [parseInt(returnUpdateEmployeeManager.updateEmpMgr.split(",")[0]), parseInt(returnUpdateEmployeeManager.updateManagerList.split(",")[0])]
+    const params = [parseInt(returnUpdateEmployeeManager.updateManagerList.split(",")[0]), parseInt(returnUpdateEmployeeManager.updateEmpMgr.split(",")[0])]
     const [rows] = await connection.query(sqlQuery, params);
     console.log(`----------Updated Employee Manager----------`)
 }
