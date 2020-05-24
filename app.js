@@ -56,6 +56,7 @@ async function startPromptAnswer(connection) {
         case "Add Employee":
             const returnEmployee = await addEmployeePrompt(connection);
             await addEmployee(connection, returnEmployee);
+            await viewAllEmployee(connection);
             await startPromptAnswer(connection);
             break;
         case "Update Employee Role":
@@ -109,7 +110,6 @@ const viewAllEmployee = async (connection) => {
     const [rows, fields] = await connection.query(sqlQuery);
     console.table(rows);
 }
-
 const viewDepartment = async (connection) => {
     const [rows, fields] = await connection.query("SELECT * FROM department");
     console.table(rows)
@@ -166,7 +166,7 @@ const addDepartment = async (connection, returnDepartment) => {
     const sqlQuery = "INSERT INTO department (name) VALUES (?)";
     const params = [returnDepartment.departmentName]
     const [rows, fields] = await connection.query(sqlQuery, params);
-    console.table(`----------Added Department----------`, rows);
+    console.table(`----------Added Department----------`);
 };
 async function addRolePrompt(connection) {
     const viewDepartmentList = await viewDepartment(connection);
@@ -195,7 +195,7 @@ const addRole = async (connection, returnRole) => {
         const sqlQuery = "INSERT INTO role (title, salary, department_id) VALUES (?,?,?)"
         const params = [returnRole.roleTitle, parseFloat(returnRole.salaryWage).toFixed(2), parseInt(returnRole.departmentId)];
         const [rows, fields] = await connection.query(sqlQuery, params);
-        console.table(`----------Added Role----------`, rows)
+        console.table(`----------Added Role----------`)
     } catch (err) {
         console.log(`err at addRole function`, err)
     }
@@ -339,7 +339,7 @@ const updateEmployeeManager = async (connection, returnUpdateEmployeeManager) =>
         managerId = parseInt(returnUpdateEmployeeManager.updateManagerList.split(",")[0]);
     };
     const params = [managerId, parseInt(returnUpdateEmployeeManager.updateEmpMgr.split(",")[0])]
-    const [rows] = await connection.query(sqlQuery, params);
+    const [rows, fields] = await connection.query(sqlQuery, params);
     console.log(`----------Updated Employee Manager----------`)
 }
 
