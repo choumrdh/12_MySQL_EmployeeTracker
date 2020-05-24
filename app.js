@@ -126,14 +126,15 @@ const viewEmployee = async (connection) => {
     return rows;
 };
 async function viewManagerName(connection) {
-    const [rows, fields] = await connection.query("SELECT * FROM employee WHERE manager_id IS NULL");
+    // "SELECT *FROM employee WHERE manager_id IS NULL"
+    const [rows, fields] = await connection.query(`SELECT employee.id, employee.first_name, employee.last_name, role.title AS role FROM employee LEFT JOIN role ON employee.role_id = role.id WHERE manager_id IS NULL`);
     console.table(rows);
     return rows;
 };
 async function viewEmployeeByManagerPrompt(connection) {
     const viewManagerList = await viewManagerName(connection);
     let managerList = viewManagerList.map((manager) => {
-        return `${manager.id},${manager.first_name}, ${manager.role_id}`
+        return `${manager.id},${manager.first_name}, ${manager.role}`
     })
     return inquirer.prompt([
         {
@@ -207,7 +208,7 @@ async function addEmployeePrompt(connection) {
     });
     const viewManagerList = await viewManagerName(connection);
     let managerList = viewManagerList.map((manager) => {
-        return `${manager.id},${manager.first_name}, ${manager.role_id}`
+        return `${manager.id},${manager.first_name}, ${manager.role}`
     });
     managerList.push("null");
     return inquirer.prompt([
@@ -313,7 +314,7 @@ const updateEmployeeManagerPrompt = async (connection) => {
     });
     const viewManagerList = await viewManagerName(connection);
     let managerList = viewManagerList.map((manager) => {
-        return `${manager.id},${manager.first_name}, ${manager.role_id}`
+        return `${manager.id},${manager.first_name}, ${manager.role}`
     })
     managerList.push("null");
     return inquirer.prompt([
@@ -347,7 +348,6 @@ const updateEmployeeManager = async (connection, returnUpdateEmployeeManager) =>
 const deleteDepartmentPrompt = async (connection) => {
     const viewDepartmentList = await viewDepartment(connection);
     let departmentListId = viewDepartmentList.map((department) => {
-        console.log(`ID: ${department.id}, NAME:${department.name}`)
         return `${department.id},${department.name}`;
     })
     return inquirer.prompt([
@@ -363,13 +363,11 @@ const deleteDepartment = async (connection, getDeleteDepartment) => {
     const sqlQuery = "DELETE FROM department WHERE id = ?";
     const params = [getDeleteDepartment.deleteDepartmentName.split(",")[0]];
     const [rows] = await connection.query(sqlQuery, params);
-
     console.table(`----------Removed Department----------`);
 };
 const deleteRolePrompt = async (connection) => {
     const viewRoleList = await viewRole(connection);
     let roleList = viewRoleList.map((role) => {
-        console.log("RoleID: " + role.id, "RoleTitle: " + role.title)
         return `${role.id},${role.title}`;
     });
     return inquirer.prompt([
@@ -390,7 +388,6 @@ const deleteRole = async (connection, getDeleteRole) => {
 const deleteEmployeePrompt = async (connection) => {
     const viewEmployeeList = await viewEmployee(connection);
     let employeeList = viewEmployeeList.map((employee) => {
-        console.log(`${employee.id},${employee.first_name},${employee.last_name}`)
         return `${employee.id},${employee.first_name} ${employee.last_name}`
     });
     return inquirer.prompt([
