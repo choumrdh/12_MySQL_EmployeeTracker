@@ -91,7 +91,7 @@ async function startPromptAnswer(connection) {
         case "Delete Employee":
             const getDeleteEmployee = await deleteEmployeePrompt(connection);
             await deleteEmployee(connection, getDeleteEmployee);
-            await viewAllEmploye(connection);
+            await viewAllEmployee(connection);
             await startPromptAnswer(connection);
             break;
         case "Exit":
@@ -214,7 +214,7 @@ async function addEmployeePrompt(connection) {
         {
             type: "input",
             name: "firstName",
-            message: "Whay is employee's first name?",
+            message: "What is employee's first name?",
             validate: (name) => {
                 var checkUpperCase = /^[A-Z]/;
                 if (checkUpperCase.test(name)) {
