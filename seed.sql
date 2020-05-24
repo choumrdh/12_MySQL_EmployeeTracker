@@ -15,7 +15,7 @@ VALUES ("Sale Lead", 85000, 1),
 INSERT INTO employee(first_name, last_name, role_id, manager_id)
 VALUES ("John", "Snow", 1, null),
        ("Daenerys", "Targaryen", 3, null), 
-	("Samwell", "Tarly", 2, 1),
+	   ("Samwell", "Tarly", 2, 1),
        ("Arya", "Stark", 7, null), 
        ("Tyrion", "Lannister", 4, 2),
        ("Cersei", "Lannister", 8, 7),
@@ -25,3 +25,13 @@ VALUES ("John", "Snow", 1, null),
 SELECT * FROM department;
 SELECT * FROM role;
 SELECT * FROM employee;
+
+SELECT employee.id, employee.first_name, employee.last_name, role.title AS role, role.salary, department.name AS department, CONCAT(manager.first_name, " ", manager.last_name) AS manager
+    FROM employee 
+    LEFT JOIN role ON employee.role_id = role.id
+    LEFT JOIN department ON role.department_id = department.id
+    LEFT JOIN employee AS manager ON employee.manager_id = manager.id;
+
+DROP TABLE department;
+DROP TABLE role;
+DROP TABLE employee;

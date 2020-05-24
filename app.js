@@ -61,6 +61,7 @@ async function startPromptAnswer(connection) {
         case "Update Employee Role":
             const returnUpdateEmployeeRole = await updateEmployeeRolePrompt(connection);
             await updateEmployeeRole(connection, returnUpdateEmployeeRole);
+            await viewAllEmployee(connection);
             await startPromptAnswer(connection);
             break;
         case "Update Employee Manager":
@@ -104,7 +105,7 @@ const viewAllEmployee = async (connection) => {
     FROM employee
     LEFT JOIN role ON employee.role_id = role.id
     LEFT JOIN department ON role.department_id = department.id
-    LEFT JOIN employee AS manager ON employee.manager_id = manager.id;`;
+    LEFT JOIN employee AS manager ON employee.manager_id = manager.id`;
     const [rows, fields] = await connection.query(sqlQuery);
     console.table(rows);
 }
@@ -144,10 +145,11 @@ async function viewEmployeeByManagerPrompt(connection) {
     ]);
 };
 const viewEmployeeByManager = async (connection, returnManager) => {
-    const sqlQuery = "SELECT * FROM employee WHERE manager_id = ? "
+    const sqlQuery =
+        "SELECT employee.id, employee.first_name, employee.last_name, role.title AS role FROM employee LEFT JOIN role ON employee.role_id = role.id WHERE manager_id = ?";
     const params = [parseInt(returnManager.managerName)];
     const [rows, fields] = await connection.query(sqlQuery, params)
-    console.log(rows);
+    console.table(rows);
 }
 // ADD
 
@@ -206,7 +208,8 @@ async function addEmployeePrompt(connection) {
     const viewManagerList = await viewManagerName(connection);
     let managerList = viewManagerList.map((manager) => {
         return `${manager.id},${manager.first_name}, ${manager.role_id}`
-    })
+    });
+    managerList.push("null");
     return inquirer.prompt([
         {
             type: "input",
@@ -259,9 +262,15 @@ async function addEmployeePrompt(connection) {
 const addEmployee = async (connection, returnEmployee) => {
     try {
         const sqlQuery = "INSERT INTO employee (first_name, last_name, role_id, manager_id) VALUES (?,?,?,?)";
-        const params = [returnEmployee.firstName, returnEmployee.lastName, returnEmployee.employeeRoleId.split(",")[0], returnEmployee.managerId.split(",")[0]]
+        let managerId;
+        if (returnEmployee.managerId === 'null') {
+            managerId = null;
+        } else {
+            managerId = parseInt(returnEmployee.managerId.split(",")[0]);
+        };
+        const params = [returnEmployee.firstName, returnEmployee.lastName, returnEmployee.employeeRoleId.split(",")[0], managerId]
         const [rows, fields] = await connection.query(sqlQuery, params);
-        console.table(`----------Added Employee ${returnEmployee.firstName} ${returnEmployee.lastName}----------`, rows);
+        console.table(`----------Added Employee ${returnEmployee.firstName} ${returnEmployee.lastName}----------`);
     } catch (err) {
         console.log(`err at addEmployee function`, err)
     }
@@ -293,7 +302,6 @@ async function updateEmployeeRolePrompt(connection) {
 }
 const updateEmployeeRole = async (connection, returnUpdateEmployeeRole) => {
     const sqlQuery = "UPDATE employee SET role_id = ? WHERE id = ?"
-    console.log(returnUpdateEmployeeRole);
     const params = [parseInt(returnUpdateEmployeeRole.updateRoleList.split(",")[0]), parseInt(returnUpdateEmployeeRole.updateEmployee.split(",")[0])]
     const [rows] = await connection.query(sqlQuery, params);
     console.log(`----------Updated Employee Role----------`)
@@ -307,6 +315,7 @@ const updateEmployeeManagerPrompt = async (connection) => {
     let managerList = viewManagerList.map((manager) => {
         return `${manager.id},${manager.first_name}, ${manager.role_id}`
     })
+    managerList.push("null");
     return inquirer.prompt([
         {
             type: "list",
@@ -323,8 +332,13 @@ const updateEmployeeManagerPrompt = async (connection) => {
 }
 const updateEmployeeManager = async (connection, returnUpdateEmployeeManager) => {
     const sqlQuery = "UPDATE employee SET manager_id = ? WHERE id = ?"
-    console.log(returnUpdateEmployeeManager);
-    const params = [parseInt(returnUpdateEmployeeManager.updateManagerList.split(",")[0]), parseInt(returnUpdateEmployeeManager.updateEmpMgr.split(",")[0])]
+    let managerId;
+    if (returnUpdateEmployeeManager.updateManagerList === 'null') {
+        managerId = null;
+    } else {
+        managerId = parseInt(returnUpdateEmployeeManager.updateManagerList.split(",")[0]);
+    };
+    const params = [managerId, parseInt(returnUpdateEmployeeManager.updateEmpMgr.split(",")[0])]
     const [rows] = await connection.query(sqlQuery, params);
     console.log(`----------Updated Employee Manager----------`)
 }
