@@ -24,7 +24,7 @@ function startPrompt() {
             type: "list",
             name: "action",
             message: "What would like to do?",
-            choices: ["View Departments", "View Roles", "View All Employee", "Add Department", "Add Role", "Add Employee", "Update Employee Role", "Update Employee Manager", "View Employees by Manager", "Delete Department", "Delete Role", "Delete Employee", "Exit"]
+            choices: ["View Departments", "View Roles", "View All Employee", "View Utilized Budget of Departments", "Add Department", "Add Role", "Add Employee", "Update Employee Role", "Update Employee Manager", "View Employees by Manager", "Delete Department", "Delete Role", "Delete Employee", "Exit"]
         }
     ])
 };
@@ -41,6 +41,10 @@ async function startPromptAnswer(connection) {
             break;
         case "View All Employee":
             await viewAllEmployee(connection);
+            await startPromptAnswer(connection);
+            break;
+        case "View Utilized Budget of Departments":
+            await viewBudgetDep(connection);
             await startPromptAnswer(connection);
             break;
         case "Add Department":
@@ -150,6 +154,12 @@ const viewEmployeeByManager = async (connection, returnManager) => {
         "SELECT employee.id, employee.first_name, employee.last_name, role.title AS role FROM employee LEFT JOIN role ON employee.role_id = role.id WHERE manager_id = ?";
     const params = [parseInt(returnManager.managerName)];
     const [rows, fields] = await connection.query(sqlQuery, params)
+    console.table(rows);
+}
+const viewBudgetDep = async (connection)=>{
+    const sqlQuery = `SELECT department.id, department.name AS department, SUM(role.salary) AS total from role
+    LEFT JOIN department on role.department_id = department.id GROUP BY department.id`
+    const [rows, fields] = await connection.query(sqlQuery);
     console.table(rows);
 }
 // ADD
