@@ -8,7 +8,7 @@ const main = async () => {
             host: "localhost",
             port: 3306,
             user: "root",
-            password: "password",
+            password: "",
             database: "employee_db"
         });
         console.log(`Connected to db with id ${connection.threadId}`)
