@@ -21,7 +21,8 @@
     ```
   
   ###  Installation :floppy_disk::
-  1. Clone this repository.
+1. Clone this repository.
+
     ```
     git clone git@github.com:choumrdh/12_MySQL_EmployeeTracker.git
     ```
